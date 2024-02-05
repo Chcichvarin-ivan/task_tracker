@@ -8,7 +8,7 @@ using namespace std;
 
 // Перечислимый тип для статуса задачи
 enum class TaskStatus {
-    NEW,          // новая
+    NEW = 0,          // новая
     IN_PROGRESS,  // в разработке
     TESTING,      // на тестировании
     DONE          // завершена
@@ -39,33 +39,39 @@ public:
         TasksInfo updated_tasks;
         TasksInfo not_updated_tasks;
         
-        TasksInfo current_person_tasks = task_count_by_person_.at(person);  
-        for(auto [task_status, quantity]: task_count_by_person_.at(person))
-        {
-            if(quantity < task_count){
-                current_person_tasks[task_status] = 0;
-                current_person_tasks[static_cast<TaskStatus>(static_cast<int>(task_status)+1)] += quantity;
-                updated_tasks[static_cast<TaskStatus>(static_cast<int>(task_status)+1)] = quantity;
+        static TasksInfo current_person_tasks = task_count_by_person_.at(person);  
+        for (TaskStatus task_status = (TaskStatus)0; task_status < TaskStatus::DONE;
+                                    task_status = static_cast<TaskStatus>((size_t)task_status + 1)){
+            int quantity = task_count_by_person_.at(person)[task_status];
+            if(task_count > quantity){
+                current_person_tasks[task_status] -= quantity;
+                TaskStatus new_status = static_cast<TaskStatus>((size_t)task_status+1);
+                current_person_tasks[new_status] += quantity;
+                updated_tasks[new_status] = quantity;
                 task_count -= quantity;
-
             }else{
                 if(task_count != quantity)
                 {
                     not_updated_tasks[task_status] = quantity - task_count;
                 }
                 current_person_tasks[task_status]-= task_count;
-                current_person_tasks[static_cast<TaskStatus>(static_cast<int>(task_status)+1)] += task_count;
-                updated_tasks[static_cast<TaskStatus>(static_cast<int>(task_status)+1)] = task_count;
+                TaskStatus new_status = static_cast<TaskStatus>((size_t)task_status+1);
+                current_person_tasks[new_status] += task_count;
+                updated_tasks[new_status] = task_count;
                 task_count = 0;
             }
+
         }
 
-        task_count_by_person_.at(person) = current_person_tasks;
+        for(auto [task,num]:current_person_tasks)
+        {
+            task_count_by_person_.at(person)[task] = num;
+        }
+        
 
         return make_tuple(updated_tasks,not_updated_tasks);
     }
 private:
-
     map<string,TasksInfo> task_count_by_person_;
 };
 
@@ -82,7 +88,7 @@ void PrintTasksInfo(TasksInfo tasks_info) {
 int main() {
     TeamTasks tasks;
     tasks.AddNewTask("Ilia"s);
-    for (int i = 0; i < 3; ++i) {
+    for (int i = 0; i < 1; ++i) {
         tasks.AddNewTask("Ivan"s);
     }
     cout << "Ilia's tasks: "s;
@@ -92,6 +98,12 @@ int main() {
 
     TasksInfo updated_tasks, untouched_tasks;
 
+    tie(updated_tasks, untouched_tasks) = tasks.PerformPersonTasks("Ivan"s, 0);
+    cout << "Updated Ivan's tasks: "s;
+    PrintTasksInfo(updated_tasks);
+    cout << "Untouched Ivan's tasks: "s;
+    PrintTasksInfo(untouched_tasks);
+
     tie(updated_tasks, untouched_tasks) = tasks.PerformPersonTasks("Ivan"s, 2);
     cout << "Updated Ivan's tasks: "s;
     PrintTasksInfo(updated_tasks);
@@ -103,4 +115,26 @@ int main() {
     PrintTasksInfo(updated_tasks);
     cout << "Untouched Ivan's tasks: "s;
     PrintTasksInfo(untouched_tasks);
+
+    tie(updated_tasks, untouched_tasks) = tasks.PerformPersonTasks("Ivan"s, 1000);
+    cout << "Updated Ivan's tasks: "s;
+    PrintTasksInfo(updated_tasks);
+    cout << "Untouched Ivan's tasks: "s;
+    PrintTasksInfo(untouched_tasks);
+
+
+    tie(updated_tasks, untouched_tasks) = tasks.PerformPersonTasks("Ivan"s, 1000);
+    cout << "Updated Ivan's tasks: "s;
+    PrintTasksInfo(updated_tasks);
+    cout << "Untouched Ivan's tasks: "s;
+    PrintTasksInfo(untouched_tasks);
+    
+    tie(updated_tasks, untouched_tasks) = tasks.PerformPersonTasks("Ivan"s, 1000);
+    cout << "Updated Ivan's tasks: "s;
+    PrintTasksInfo(updated_tasks);
+    cout << "Untouched Ivan's tasks: "s;
+    PrintTasksInfo(untouched_tasks);
+
+
+
 }
